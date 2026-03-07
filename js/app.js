@@ -216,6 +216,12 @@ function init() {
   // QuickAdd bar
   initQuickAdd();
 
+  // Re-render current view when cloud sync brings new data
+  window.addEventListener('fincontrol-synced', () => {
+    console.log('Sync: re-rendering', currentViewName);
+    navigateTo(currentViewName);
+  });
+
   // Start on dashboard
   navigateTo('dashboard');
 
