@@ -64,7 +64,27 @@ class Store {
     load() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) return JSON.parse(raw);
+            if (raw) {
+                const data = JSON.parse(raw);
+                // Migrate: move investments from months to root if needed
+                if (!data.investments || data.investments.length === 0) {
+                    data.investments = [];
+                    if (data.months) {
+                        for (const month of Object.values(data.months)) {
+                            if (month.investments && month.investments.length > 0) {
+                                data.investments.push(...month.investments);
+                            }
+                        }
+                    }
+                }
+                // Clean up: remove investments from month objects
+                if (data.months) {
+                    for (const month of Object.values(data.months)) {
+                        delete month.investments;
+                    }
+                }
+                return data;
+            }
         } catch (e) {
             console.warn('Error loading data:', e);
         }
