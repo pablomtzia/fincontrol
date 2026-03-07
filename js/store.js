@@ -4,7 +4,7 @@
  */
 
 import { generateId, getCurrentMonthStr } from './utils.js';
-import { pushData, pullData, resolveConflict, isSyncEnabled } from './syncService.js';
+import { pushData, fullSync, isSyncEnabled } from './syncService.js';
 
 const STORAGE_KEY = 'fincontrol_data';
 
@@ -81,7 +81,6 @@ class Store {
             if (result.changed) {
                 this.data = result.data;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
-                this.notify();
                 console.log('Datos sincronizados desde la nube');
             }
         } catch (e) {
