@@ -110,9 +110,17 @@
     <!-- JavaScript -->
     <script type="module" src="js/app.js"></script>
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js');
-        }
+        (async () => {
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                for (const k of keys) {
+                    if (k !== 'fincontrol-v2.5') await caches.delete(k);
+                }
+            }
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js');
+            }
+        })();
     </script>
 </body>
 
