@@ -244,11 +244,16 @@ export class ExpensesView {
     });
 
     container.querySelectorAll('.delete-fixed').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (confirm('¿Eliminar este gasto fijo?')) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
           store.deleteFixedExpense(btn.dataset.id);
           showToast('Gasto fijo eliminado', 'success');
           this.render(container);
+        } catch (err) {
+          console.error('Error eliminando gasto fijo:', err);
+          showToast('Error al eliminar', 'error');
         }
       });
     });
@@ -261,11 +266,16 @@ export class ExpensesView {
     });
 
     container.querySelectorAll('.delete-variable').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (confirm('¿Eliminar este gasto variable?')) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
           store.deleteVariableExpense(btn.dataset.id);
           showToast('Gasto variable eliminado', 'success');
           this.render(container);
+        } catch (err) {
+          console.error('Error eliminando gasto variable:', err);
+          showToast('Error al eliminar', 'error');
         }
       });
     });
