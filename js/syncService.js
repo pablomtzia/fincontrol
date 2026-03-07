@@ -1,8 +1,8 @@
 /**
  * SyncService — Sincronización en la nube via Firebase Realtime Database REST API
  *
- * No necesita SDK. Solo usa fetch() con la REST API de Firebase.
- * El usuario configura su propia URL de Firebase en Ajustes.
+ * MERGE inteligente: combina datos de ambos dispositivos por ID.
+ * Auto-sync cuando vuelves a la pestaña/app.
  */
 
 const SYNC_URL_KEY = 'fincontrol_sync_url';
@@ -15,7 +15,6 @@ export function getSyncUrl() {
 }
 
 export function setSyncUrl(url) {
-    // Limpiar URL: quitar trailing slash
     const clean = url.replace(/\/+$/, '');
     localStorage.setItem(SYNC_URL_KEY, clean);
 }
@@ -36,8 +35,7 @@ export function disableSync() {
 // ===== SYNC OPERATIONS =====
 
 /**
- * Sube los datos a Firebase (PUT)
- * Silencioso — nunca lanza errores al usuario
+ * Sube datos a Firebase (PUT)
  */
 export async function pushData(data) {
     if (!isSyncEnabled()) return false;
@@ -58,14 +56,13 @@ export async function pushData(data) {
 
         return res.ok;
     } catch (e) {
-        console.warn('Sync push failed (offline?):', e.message);
+        console.warn('Sync push failed:', e.message);
         return false;
     }
 }
 
 /**
- * Descarga los datos de Firebase (GET)
- * Devuelve null si no hay datos o falla
+ * Descarga datos de Firebase (GET)
  */
 export async function pullData() {
     if (!isSyncEnabled()) return null;
@@ -76,11 +73,11 @@ export async function pullData() {
         if (!res.ok) return null;
 
         const data = await res.json();
-        if (!data || !data.currentMonth || !data.months) return null;
+        if (!data || !data.months) return null;
 
         return data;
     } catch (e) {
-        console.warn('Sync pull failed (offline?):', e.message);
+        console.warn('Sync pull failed:', e.message);
         return null;
     }
 }
@@ -100,23 +97,128 @@ export async function testConnection(url) {
     }
 }
 
+// ===== MERGE INTELIGENTE =====
+
 /**
- * Resuelve conflictos: devuelve los datos más recientes
- * Compara timestamps de local vs cloud
+ * Merge de dos arrays por ID: combina sin duplicados.
+ * Si un ID existe en ambos, mantiene la versión del array 'priority'.
  */
-export function resolveConflict(localData, cloudData) {
+function mergeArraysById(arrA, arrB) {
+    if (!arrA && !arrB) return [];
+    if (!arrA) return [...arrB];
+    if (!arrB) return [...arrA];
+
+    const map = new Map();
+
+    // Primero meter B (cloud)
+    for (const item of arrB) {
+        if (item && item.id) {
+            map.set(item.id, item);
+        }
+    }
+
+    // Luego A (local) — si existe en ambos, local gana (es lo que el usuario acaba de editar)
+    for (const item of arrA) {
+        if (item && item.id) {
+            map.set(item.id, item);
+        }
+    }
+
+    return Array.from(map.values());
+}
+
+/**
+ * Merge completo de datos locales + nube.
+ * Combina gastos, ingresos e inversiones de ambos dispositivos.
+ */
+export function mergeData(localData, cloudData) {
     if (!cloudData) return localData;
     if (!localData) return cloudData;
 
-    const localTime = localData._lastModified || 0;
-    const cloudTime = cloudData._lastModified || 0;
+    const merged = JSON.parse(JSON.stringify(localData)); // deep clone
 
-    // Si la nube es más reciente, usar datos de la nube
-    if (cloudTime > localTime) {
-        return cloudData;
+    // Merge de cada mes
+    const allMonths = new Set([
+        ...Object.keys(localData.months || {}),
+        ...Object.keys(cloudData.months || {}),
+    ]);
+
+    if (!merged.months) merged.months = {};
+
+    for (const month of allMonths) {
+        const localMonth = (localData.months || {})[month] || {};
+        const cloudMonth = (cloudData.months || {})[month] || {};
+
+        merged.months[month] = {
+            income: mergeArraysById(localMonth.income, cloudMonth.income),
+            fixedExpenses: mergeArraysById(localMonth.fixedExpenses, cloudMonth.fixedExpenses),
+            variableExpenses: mergeArraysById(localMonth.variableExpenses, cloudMonth.variableExpenses),
+        };
     }
 
-    return localData;
+    // Merge inversiones
+    merged.investments = mergeArraysById(
+        localData.investments,
+        cloudData.investments
+    );
+
+    // Usar el currentMonth más reciente
+    if (cloudData.currentMonth) {
+        merged.currentMonth = localData.currentMonth || cloudData.currentMonth;
+    }
+
+    // Timestamp
+    merged._lastModified = Date.now();
+
+    return merged;
+}
+
+/**
+ * Sync completo: pull → merge → save local → push merged
+ * Devuelve true si hubo cambios desde la nube
+ */
+export async function fullSync(localData) {
+    if (!isSyncEnabled()) return { changed: false, data: localData };
+
+    try {
+        const cloudData = await pullData();
+
+        if (!cloudData) {
+            // No hay datos en la nube, subir los locales
+            await pushData(localData);
+            return { changed: false, data: localData };
+        }
+
+        // Merge
+        const merged = mergeData(localData, cloudData);
+
+        // Comprobar si hay diferencias respecto al local
+        const localItems = countItems(localData);
+        const mergedItems = countItems(merged);
+        const hasNewFromCloud = mergedItems > localItems;
+
+        // Push el resultado merged a la nube
+        await pushData(merged);
+
+        return { changed: hasNewFromCloud, data: merged };
+    } catch (e) {
+        console.warn('Full sync failed:', e);
+        return { changed: false, data: localData };
+    }
+}
+
+// Cuenta total de items para detectar cambios
+function countItems(data) {
+    let count = 0;
+    if (data.months) {
+        for (const m of Object.values(data.months)) {
+            count += (m.income || []).length;
+            count += (m.fixedExpenses || []).length;
+            count += (m.variableExpenses || []).length;
+        }
+    }
+    count += (data.investments || []).length;
+    return count;
 }
 
 // ===== HELPERS =====

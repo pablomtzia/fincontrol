@@ -4,7 +4,7 @@
 
 import { store } from '../store.js';
 import { showToast } from '../app.js';
-import { getSyncUrl, isSyncEnabled, enableSync, disableSync, testConnection, pushData, pullData } from '../syncService.js';
+import { getSyncUrl, isSyncEnabled, enableSync, disableSync, testConnection, pushData, fullSync } from '../syncService.js';
 
 export class SettingsView {
   render(container) {
@@ -172,16 +172,17 @@ export class SettingsView {
     container.querySelector('#syncNowBtn')?.addEventListener('click', async () => {
       showToast('Sincronizando...', 'info');
 
-      // Pull from cloud
-      const cloudData = await pullData();
-      if (cloudData && cloudData._lastModified > (store.data._lastModified || 0)) {
-        store.data = cloudData;
-        store.save();
-        showToast('Datos actualizados desde la nube', 'success');
+      const result = await fullSync(store.data);
+      if (result.changed) {
+        store.data = result.data;
+        store.data._lastModified = Date.now();
+        localStorage.setItem('fincontrol_data', JSON.stringify(store.data));
+        store.notify();
+        showToast('Datos sincronizados correctamente', 'success');
+        setTimeout(() => location.reload(), 500);
       } else {
-        // Push local to cloud
         await pushData(store.data);
-        showToast('Datos subidos a la nube', 'success');
+        showToast('Todo sincronizado', 'success');
       }
     });
 

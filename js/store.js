@@ -23,29 +23,30 @@ function seedData() {
     const month = getCurrentMonthStr();
     return {
         currentMonth: month,
-        lastPriceUpdate: null,
         months: {
             [month]: {
                 income: [
-                    { id: generateId(), name: 'Salario', amount: 1200, type: 'fijo', notes: 'Nómina mensual' },
-                    { id: generateId(), name: 'Prestaciones', amount: 680, type: 'fijo', notes: 'Ayuda mensual' },
+                    { id: 'inc1', name: 'Salario', amount: 1200, notes: 'Trabajo a tiempo parcial' },
+                    { id: 'inc2', name: 'Prestaciones', amount: 680, notes: 'Beca estudios' },
                 ],
                 fixedExpenses: [
-                    { id: generateId(), name: 'Alimentación', amount: 250, category: 'alimentacion', notes: 'Compra semanal' },
-                    { id: generateId(), name: 'Gimnasio', amount: 28.90, category: 'salud', notes: 'Cuota mensual' },
-                    { id: generateId(), name: 'Claude Pro', amount: 21.78, category: 'suscripciones', notes: 'Suscripción IA' },
-                    { id: generateId(), name: 'iCloud', amount: 2.99, category: 'suscripciones', notes: 'Almacenamiento' },
-                    { id: generateId(), name: 'Suministros', amount: 50, category: 'hogar', notes: 'Luz, agua, gas, WiFi' },
+                    { id: 'fix1', name: 'Alimentación', amount: 250, category: 'alimentacion', notes: 'Compra semanal' },
+                    { id: 'fix2', name: 'Gimnasio', amount: 28.90, category: 'salud', notes: 'Cuota mensual' },
+                    { id: 'fix3', name: 'Claude Pro', amount: 21.78, category: 'suscripciones', notes: 'Suscripción IA' },
+                    { id: 'fix4', name: 'iCloud', amount: 2.99, category: 'suscripciones', notes: 'Almacenamiento' },
+                    { id: 'fix5', name: 'Suministros', amount: 50, category: 'hogar', notes: 'Luz, agua, gas, WiFi' },
                 ],
                 variableExpenses: [],
-                investments: [
-                    { id: generateId(), name: 'Bitcoin', ticker: 'bitcoin', invested: 1000, shares: 0.014605, pricePerShare: 59000, broker: 'Trade Republic', type: 'crypto' },
-                    { id: generateId(), name: 'Alphabet', ticker: 'GOOGL', invested: 1000, shares: 5.399803, pricePerShare: 257, broker: 'Trade Republic', type: 'acción' },
-                    { id: generateId(), name: 'District Metals', ticker: 'DMX.V', invested: 10, shares: 13.554216, pricePerShare: 0.285, broker: 'Trade Republic', type: 'acción' },
-                    { id: generateId(), name: 'District Metals', ticker: 'DMX.V', invested: 300, shares: 354, pricePerShare: 0.285, broker: 'IBKR', type: 'acción' },
-                ],
-            }
-        }
+            },
+        },
+        investments: [
+            { id: 'inv1', name: 'Bitcoin', type: 'crypto', broker: 'Trade Republic', shares: 0.014605, pricePerShare: 82000, invested: 1000, ticker: 'bitcoin' },
+            { id: 'inv2', name: 'Alphabet', type: 'acción', broker: 'Trade Republic', shares: 5.399803, pricePerShare: 185.19, invested: 1000, ticker: 'GOOGL' },
+            { id: 'inv3', name: 'District Metals', type: 'acción', broker: 'Trade Republic', shares: 13.554216, pricePerShare: 0.22, invested: 10, ticker: 'DMX.V' },
+            { id: 'inv4', name: 'District Metals', type: 'acción', broker: 'IBKR', shares: 354, pricePerShare: 0.22, invested: 300, ticker: 'DMX.V' },
+        ],
+        lastPriceUpdate: null,
+        _lastModified: Date.now(),
     };
 }
 
@@ -53,44 +54,53 @@ class Store {
     constructor() {
         this.data = this.load();
         this.listeners = [];
-        // Intentar sincronizar con la nube al iniciar
+        this._syncing = false;
+        // Sync al iniciar
         this.initCloudSync();
+        // Auto-sync cuando vuelves a la app/pestaña
+        this._setupVisibilitySync();
     }
 
-    // Load data from localStorage
+    // Load from localStorage
     load() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) {
-                return JSON.parse(raw);
-            }
+            if (raw) return JSON.parse(raw);
         } catch (e) {
-            console.warn('Error loading data, using defaults:', e);
+            console.warn('Error loading data:', e);
         }
         return seedData();
     }
 
-    // Cloud sync on startup
+    // Cloud sync on startup + tab focus
     async initCloudSync() {
-        if (!isSyncEnabled()) return;
+        if (!isSyncEnabled() || this._syncing) return;
+        this._syncing = true;
         try {
-            const cloudData = await pullData();
-            if (cloudData) {
-                const resolved = resolveConflict(this.data, cloudData);
-                if (resolved !== this.data) {
-                    // Cloud data is newer — update local
-                    this.data = resolved;
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
-                    this.notify();
-                    console.log('Datos sincronizados desde la nube');
-                }
+            const result = await fullSync(this.data);
+            if (result.changed) {
+                this.data = result.data;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+                this.notify();
+                console.log('Datos sincronizados desde la nube');
             }
         } catch (e) {
-            console.warn('Cloud sync init failed:', e);
+            console.warn('Cloud sync failed:', e);
+        } finally {
+            this._syncing = false;
         }
     }
 
-    // Save data to localStorage + cloud
+    // Auto-sync when tab becomes visible again
+    _setupVisibilitySync() {
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && isSyncEnabled()) {
+                this.initCloudSync();
+            }
+        });
+    }
+
+    // Save to localStorage + push to cloud
     save() {
         this.data._lastModified = Date.now();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
