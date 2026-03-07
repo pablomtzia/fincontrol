@@ -1,181 +1,99 @@
 /**
- * SyncService — Sincronización en la nube via Firebase Realtime Database REST API
- *
- * MERGE inteligente: combina datos de ambos dispositivos por ID.
- * Auto-sync cuando vuelves a la pestaña/app.
+ * syncService.js — Cloud Sync via Firebase Realtime Database (REST API, no SDK)
+ * 
+ * Strategy: "Last Write Wins" with push-on-save
+ * - Each save() pushes the full dataset to Firebase
+ * - On load/tab-focus: pull from Firebase, compare timestamps, take the newest
+ * - Simple and reliable for personal single-user multi-device use
  */
 
-const SYNC_URL_KEY = 'fincontrol_sync_url';
-const SYNC_ENABLED_KEY = 'fincontrol_sync_enabled';
+const SYNC_KEY = 'fincontrol_sync_url';
 
 // ===== CONFIG =====
 
 export function getSyncUrl() {
-    return localStorage.getItem(SYNC_URL_KEY) || '';
-}
-
-export function setSyncUrl(url) {
-    const clean = url.replace(/\/+$/, '');
-    localStorage.setItem(SYNC_URL_KEY, clean);
+    return localStorage.getItem(SYNC_KEY) || '';
 }
 
 export function isSyncEnabled() {
-    return localStorage.getItem(SYNC_ENABLED_KEY) === 'true' && getSyncUrl().length > 0;
+    return !!getSyncUrl();
 }
 
 export function enableSync(url) {
-    setSyncUrl(url);
-    localStorage.setItem(SYNC_ENABLED_KEY, 'true');
+    // Clean URL
+    url = url.trim().replace(/\/+$/, '');
+    if (!url.endsWith('.json')) {
+        url += '/fincontrol.json';
+    }
+    localStorage.setItem(SYNC_KEY, url);
 }
 
 export function disableSync() {
-    localStorage.setItem(SYNC_ENABLED_KEY, 'false');
+    localStorage.removeItem(SYNC_KEY);
 }
 
-// ===== SYNC OPERATIONS =====
+// ===== TEST CONNECTION =====
 
-/**
- * Sube datos a Firebase (PUT)
- */
-export async function pushData(data) {
-    if (!isSyncEnabled()) return false;
+export async function testConnection() {
+    const url = getSyncUrl();
+    if (!url) return { ok: false, error: 'No URL configured' };
 
     try {
-        const url = getSyncUrl();
-        const payload = {
-            ...data,
-            _lastModified: Date.now(),
-            _device: getDeviceId(),
-        };
-
-        const res = await fetch(`${url}/fincontrol.json`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-
-        return res.ok;
+        const resp = await fetch(url, { method: 'GET' });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return { ok: true };
     } catch (e) {
-        console.warn('Sync push failed:', e.message);
-        return false;
+        return { ok: false, error: e.message };
     }
 }
 
-/**
- * Descarga datos de Firebase (GET)
- */
-export async function pullData() {
-    if (!isSyncEnabled()) return null;
+// ===== PUSH / PULL =====
+
+export async function pushData(data) {
+    const url = getSyncUrl();
+    if (!url) return;
 
     try {
-        const url = getSyncUrl();
-        const res = await fetch(`${url}/fincontrol.json`);
-        if (!res.ok) return null;
+        // Ensure timestamp is current
+        data._lastModified = Date.now();
+        data._deviceId = getDeviceId();
 
-        const data = await res.json();
-        if (!data || !data.months) return null;
+        const resp = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
 
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        console.log('Sync: datos subidos a la nube');
+    } catch (e) {
+        console.warn('Sync push failed:', e);
+    }
+}
+
+export async function pullData() {
+    const url = getSyncUrl();
+    if (!url) return null;
+
+    try {
+        const resp = await fetch(url, { method: 'GET' });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        const data = await resp.json();
         return data;
     } catch (e) {
-        console.warn('Sync pull failed:', e.message);
+        console.warn('Sync pull failed:', e);
         return null;
     }
 }
 
-/**
- * Comprueba si la URL de Firebase es válida
- */
-export async function testConnection(url) {
-    try {
-        const clean = url.replace(/\/+$/, '');
-        const res = await fetch(`${clean}/.json?shallow=true`, {
-            signal: AbortSignal.timeout(5000),
-        });
-        return res.ok;
-    } catch {
-        return false;
-    }
-}
-
-// ===== MERGE INTELIGENTE =====
+// ===== FULL SYNC =====
 
 /**
- * Merge de dos arrays por ID: combina sin duplicados.
- * Si un ID existe en ambos, mantiene la versión del array 'priority'.
- */
-function mergeArraysById(arrA, arrB) {
-    if (!arrA && !arrB) return [];
-    if (!arrA) return [...arrB];
-    if (!arrB) return [...arrA];
-
-    const map = new Map();
-
-    // Primero meter B (cloud)
-    for (const item of arrB) {
-        if (item && item.id) {
-            map.set(item.id, item);
-        }
-    }
-
-    // Luego A (local) — si existe en ambos, local gana (es lo que el usuario acaba de editar)
-    for (const item of arrA) {
-        if (item && item.id) {
-            map.set(item.id, item);
-        }
-    }
-
-    return Array.from(map.values());
-}
-
-/**
- * Merge completo de datos locales + nube.
- * Combina gastos, ingresos e inversiones de ambos dispositivos.
- */
-export function mergeData(localData, cloudData) {
-    if (!cloudData) return localData;
-    if (!localData) return cloudData;
-
-    const merged = JSON.parse(JSON.stringify(localData)); // deep clone
-
-    // Merge de cada mes
-    const allMonths = new Set([
-        ...Object.keys(localData.months || {}),
-        ...Object.keys(cloudData.months || {}),
-    ]);
-
-    if (!merged.months) merged.months = {};
-
-    for (const month of allMonths) {
-        const localMonth = (localData.months || {})[month] || {};
-        const cloudMonth = (cloudData.months || {})[month] || {};
-
-        merged.months[month] = {
-            income: mergeArraysById(localMonth.income, cloudMonth.income),
-            fixedExpenses: mergeArraysById(localMonth.fixedExpenses, cloudMonth.fixedExpenses),
-            variableExpenses: mergeArraysById(localMonth.variableExpenses, cloudMonth.variableExpenses),
-        };
-    }
-
-    // Merge inversiones
-    merged.investments = mergeArraysById(
-        localData.investments,
-        cloudData.investments
-    );
-
-    // Usar el currentMonth más reciente
-    if (cloudData.currentMonth) {
-        merged.currentMonth = localData.currentMonth || cloudData.currentMonth;
-    }
-
-    // Timestamp
-    merged._lastModified = Date.now();
-
-    return merged;
-}
-
-/**
- * Sync completo: pull → merge → save local → push merged
- * Devuelve true si hubo cambios desde la nube
+ * Simple sync: pull from cloud, compare timestamps.
+ * - If cloud is newer → use cloud data
+ * - If local is newer → push local data
+ * - Returns { changed: boolean, data: object }
  */
 export async function fullSync(localData) {
     if (!isSyncEnabled()) return { changed: false, data: localData };
@@ -184,41 +102,30 @@ export async function fullSync(localData) {
         const cloudData = await pullData();
 
         if (!cloudData) {
-            // No hay datos en la nube, subir los locales
+            // Nothing in the cloud yet — push local
             await pushData(localData);
             return { changed: false, data: localData };
         }
 
-        // Merge
-        const merged = mergeData(localData, cloudData);
+        const localTime = localData._lastModified || 0;
+        const cloudTime = cloudData._lastModified || 0;
 
-        // Comprobar si hay diferencias respecto al local
-        const localItems = countItems(localData);
-        const mergedItems = countItems(merged);
-        const hasNewFromCloud = mergedItems > localItems;
+        if (cloudTime > localTime) {
+            // Cloud is newer — use cloud data (another device saved more recently)
+            console.log('Sync: cloud es más reciente, usando datos de la nube');
+            return { changed: true, data: cloudData };
+        } else if (localTime > cloudTime) {
+            // Local is newer — push to cloud
+            await pushData(localData);
+            return { changed: false, data: localData };
+        }
 
-        // Push el resultado merged a la nube
-        await pushData(merged);
-
-        return { changed: hasNewFromCloud, data: merged };
+        // Same timestamp — no changes needed
+        return { changed: false, data: localData };
     } catch (e) {
         console.warn('Full sync failed:', e);
         return { changed: false, data: localData };
     }
-}
-
-// Cuenta total de items para detectar cambios
-function countItems(data) {
-    let count = 0;
-    if (data.months) {
-        for (const m of Object.values(data.months)) {
-            count += (m.income || []).length;
-            count += (m.fixedExpenses || []).length;
-            count += (m.variableExpenses || []).length;
-        }
-    }
-    count += (data.investments || []).length;
-    return count;
 }
 
 // ===== HELPERS =====

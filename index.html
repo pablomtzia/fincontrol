@@ -110,15 +110,15 @@
     <!-- JavaScript -->
     <script type="module" src="js/app.js"></script>
     <script>
+        // Remove old Service Workers and caches that cause loading issues
         (async () => {
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                for (const r of regs) await r.unregister();
+            }
             if ('caches' in window) {
                 const keys = await caches.keys();
-                for (const k of keys) {
-                    if (k !== 'fincontrol-v2.5') await caches.delete(k);
-                }
-            }
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('./sw.js');
+                for (const k of keys) await caches.delete(k);
             }
         })();
     </script>
