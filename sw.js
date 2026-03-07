@@ -1,7 +1,7 @@
 // Service Worker — FinControl PWA
 // Caches all app files for offline use
 
-const CACHE_NAME = 'fincontrol-v2.1';
+const CACHE_NAME = 'fincontrol-v2.2';
 const ASSETS = [
     './',
     './index.html',

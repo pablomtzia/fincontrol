@@ -216,10 +216,17 @@ function init() {
   // QuickAdd bar
   initQuickAdd();
 
+  // Re-render view when data changes (e.g. from cloud sync)
+  store.subscribe(() => {
+    if (currentView && mainContent) {
+      currentView.render(mainContent);
+    }
+  });
+
   // Start on dashboard
   navigateTo('dashboard');
 
-  console.log('FinControl listo');
+  console.log('fincontrol listo');
 }
 
 // ===== QUICK ADD =====
