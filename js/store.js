@@ -14,7 +14,6 @@ function defaultMonthData() {
         income: [],
         fixedExpenses: [],
         variableExpenses: [],
-        investments: [],
     };
 }
 
@@ -138,10 +137,9 @@ class Store {
         if (months.length > 0) {
             const lastMonth = this.data.months[months[months.length - 1]];
             return {
-                income: JSON.parse(JSON.stringify(lastMonth.income)).map(i => ({ ...i, id: generateId() })),
-                fixedExpenses: JSON.parse(JSON.stringify(lastMonth.fixedExpenses)).map(e => ({ ...e, id: generateId() })),
+                income: JSON.parse(JSON.stringify(lastMonth.income || [])).map(i => ({ ...i, id: generateId() })),
+                fixedExpenses: JSON.parse(JSON.stringify(lastMonth.fixedExpenses || [])).map(e => ({ ...e, id: generateId() })),
                 variableExpenses: [],
-                investments: JSON.parse(JSON.stringify(lastMonth.investments)).map(i => ({ ...i, id: generateId() })),
             };
         }
         return defaultMonthData();
@@ -242,19 +240,20 @@ class Store {
 
     // ===== INVESTMENTS =====
 
-    getInvestments(month = null) {
-        return this.getMonthData(month).investments;
+    getInvestments() {
+        return this.data.investments || [];
     }
 
     addInvestment(item) {
+        if (!this.data.investments) this.data.investments = [];
         const entry = { id: generateId(), ...item };
-        this.getMonthData().investments.push(entry);
+        this.data.investments.push(entry);
         this.save();
         return entry;
     }
 
     updateInvestment(id, updates) {
-        const investments = this.getMonthData().investments;
+        const investments = this.data.investments || [];
         const idx = investments.findIndex(i => i.id === id);
         if (idx !== -1) {
             investments[idx] = { ...investments[idx], ...updates };
@@ -263,8 +262,7 @@ class Store {
     }
 
     deleteInvestment(id) {
-        const md = this.getMonthData();
-        md.investments = md.investments.filter(i => i.id !== id);
+        this.data.investments = (this.data.investments || []).filter(i => i.id !== id);
         this.save();
     }
 
@@ -272,7 +270,7 @@ class Store {
 
     applyPriceUpdates(priceMap) {
         // priceMap = { investmentId: newPricePerShare }
-        const investments = this.getMonthData().investments;
+        const investments = this.data.investments || [];
         let updated = 0;
         for (const [id, price] of Object.entries(priceMap)) {
             const idx = investments.findIndex(i => i.id === id);
@@ -296,14 +294,15 @@ class Store {
 
     getSummary(month = null) {
         const md = this.getMonthData(month);
+        const investments = this.data.investments || [];
 
-        const totalIncome = md.income.reduce((s, i) => s + Number(i.amount), 0);
-        const totalFixed = md.fixedExpenses.reduce((s, e) => s + Number(e.amount), 0);
-        const totalVariable = md.variableExpenses.reduce((s, e) => s + Number(e.amount), 0);
+        const totalIncome = (md.income || []).reduce((s, i) => s + Number(i.amount), 0);
+        const totalFixed = (md.fixedExpenses || []).reduce((s, e) => s + Number(e.amount), 0);
+        const totalVariable = (md.variableExpenses || []).reduce((s, e) => s + Number(e.amount), 0);
         const totalExpenses = totalFixed + totalVariable;
 
-        const totalInvested = md.investments.reduce((s, i) => s + Number(i.invested), 0);
-        const currentValue = md.investments.reduce(
+        const totalInvested = investments.reduce((s, i) => s + Number(i.invested), 0);
+        const currentValue = investments.reduce(
             (s, i) => s + (Number(i.shares) * Number(i.pricePerShare)), 0
         );
 
