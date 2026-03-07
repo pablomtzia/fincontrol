@@ -1,6 +1,6 @@
 {
-    "name": "FinControl",
-    "short_name": "FinControl",
+    "name": "fincontrol",
+    "short_name": "fincontrol",
     "description": "Controla tus finanzas personales",
     "start_url": "./index.html",
     "display": "standalone",
