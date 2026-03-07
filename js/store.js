@@ -82,8 +82,6 @@ class Store {
                 this.data = result.data;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
                 console.log('Datos sincronizados desde la nube');
-                // Tell the app to re-render the current view
-                window.dispatchEvent(new Event('fincontrol-synced'));
             }
         } catch (e) {
             console.warn('Cloud sync failed:', e);
