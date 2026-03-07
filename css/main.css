@@ -1,0 +1,273 @@
+/* ===================================
+   SISTEMA DE DISEÑO - VARIABLES
+   =================================== */
+
+:root {
+  /* Colores base - Fintech Modern */
+  --color-bg-primary: #F8F9FB;
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --color-bg-card: #FFFFFF;
+
+  /* Acento - Vibrant Purple/Blue */
+  --color-accent: #6C5CE7;
+  --color-accent-hover: #5F4FDB;
+  --color-accent-light: rgba(108, 92, 231, 0.1);
+  --color-accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  /* Textos */
+  --color-text-primary: #2D3748;
+  --color-text-secondary: #718096;
+  --color-text-muted: #A0AEC0;
+
+  /* Categorías (pastel) */
+  --color-alimentacion: #FF9A9E;
+  --color-transporte: #A8E6CF;
+  --color-salud: #FFD4A3;
+  --color-ocio: #C4B5FF;
+  --color-hogar: #FFB4D1;
+  --color-ropa: #B4E7FF;
+  --color-tecnologia: #D4A5FF;
+  --color-viajes: #FFE5A5;
+  --color-otros: #C7CEEA;
+
+  /* Ingresos */
+  --color-salario: #4ECDC4;
+  --color-freelance: #95E1D3;
+  --color-ingresos-varios: #A8E6CF;
+
+  /* Estados */
+  --color-success: #4ECDC4;
+  --color-warning: #FFE66D;
+  --color-error: #FF6B6B;
+  --color-info: #95E1D3;
+
+  /* Glassmorphism - Subtle for fintech */
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(226, 232, 240, 0.8);
+  --glass-blur: 20px;
+
+  /* Sombras - Elevated & Soft */
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.2);
+  --shadow-glow: 0 4px 24px rgba(108, 92, 231, 0.25);
+
+  /* Espaciado - Generous */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2.5rem;
+  --spacing-xl: 4rem;
+  --spacing-2xl: 6rem;
+
+  /* Tipografía - Modern Fintech */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+  --font-size-3xl: 2.5rem;
+  --font-size-4xl: 3.5rem;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* Animaciones */
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms ease;
+  --transition-slow: 500ms ease;
+  --easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* Layout */
+  --header-height: 72px;
+  --bottom-nav-height: 80px;
+  --content-max-width: 1200px;
+  --border-radius: 20px;
+  --border-radius-sm: 12px;
+  --border-radius-lg: 24px;
+  --border-radius-xl: 32px;
+}
+
+/* ===================================
+   RESET Y BASE
+   =================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-family);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===================================
+   LAYOUT PRINCIPAL
+   =================================== */
+
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background: var(--color-bg-secondary);
+  backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid #E2E8F0;
+  box-shadow: var(--shadow-xs);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--spacing-lg);
+}
+
+.header-content {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.header-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-text-primary);
+}
+
+.header-icon {
+  font-size: var(--font-size-2xl);
+}
+
+.app-content {
+  padding-top: calc(var(--header-height) + 50px + 60px + var(--spacing-lg));
+  padding-bottom: var(--spacing-lg);
+  padding-left: var(--spacing-md);
+  padding-right: var(--spacing-md);
+  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ===================================
+   UTILIDADES
+   =================================== */
+
+.hidden {
+  display: none !important;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.mb-xs { margin-bottom: var(--spacing-xs); }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+
+.mt-xs { margin-top: var(--spacing-xs); }
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+
+/* ===================================
+   LOADING OVERLAY
+   =================================== */
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(248, 249, 251, 0.95);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  z-index: 9999;
+}
+
+.loading-spinner {
+  width: 56px;
+  height: 56px;
+  border: 4px solid #E2E8F0;
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===================================
+   TOAST CONTAINER
+   =================================== */
+
+.toast-container {
+  position: fixed;
+  top: calc(var(--header-height) + var(--spacing-md));
+  right: var(--spacing-md);
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  pointer-events: none;
+}
+
+/* ===================================
+   RESPONSIVE
+   =================================== */
+
+@media (min-width: 768px) {
+  .app-content {
+    padding-left: var(--spacing-xl);
+    padding-right: var(--spacing-xl);
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-content {
+    padding-top: calc(var(--header-height) + 50px + 60px + var(--spacing-xl));
+    padding-bottom: var(--spacing-xl);
+  }
+}

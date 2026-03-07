@@ -1,0 +1,229 @@
+/* ===================================
+   NAVEGACIÓN SUPERIOR - TABS STYLE
+   =================================== */
+
+.top-nav {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: var(--color-bg-secondary);
+  border-bottom: 2px solid #E2E8F0;
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--spacing-lg);
+  z-index: 99;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Ocultar scrollbar pero mantener funcionalidad */
+.top-nav::-webkit-scrollbar {
+  height: 2px;
+}
+
+.top-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.top-nav::-webkit-scrollbar-thumb {
+  background: #E2E8F0;
+  border-radius: 2px;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: var(--spacing-xs);
+  min-width: max-content;
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  white-space: nowrap;
+  border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+}
+
+.nav-tab:hover {
+  color: var(--color-text-primary);
+  background: #F7FAFC;
+}
+
+.nav-tab.active {
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--color-accent);
+  border-radius: 3px 3px 0 0;
+}
+
+.nav-tab-icon {
+  font-size: var(--font-size-lg);
+}
+
+.nav-tab-label {
+  font-size: var(--font-size-md);
+}
+
+.nav-tab-badge {
+  display: inline-block;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--color-accent);
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  border-radius: 10px;
+  line-height: 20px;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .top-nav {
+    padding: 0 var(--spacing-md);
+  }
+
+  .nav-tab {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+
+  .nav-tab-icon {
+    font-size: var(--font-size-md);
+  }
+
+  .nav-tab-label {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .top-nav {
+    padding: 0 var(--spacing-xl);
+  }
+}
+
+/* ===================================
+   MONTH SELECTOR
+   =================================== */
+
+.month-selector-container {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: #FAFBFC;
+  border-bottom: 1px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+}
+
+.month-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.month-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: var(--border-radius-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.month-nav-btn:hover {
+  background: #F7FAFC;
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.month-nav-btn:active {
+  transform: scale(0.95);
+}
+
+.month-select {
+  min-width: 180px;
+  height: 36px;
+  padding: 0 var(--spacing-md);
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: var(--border-radius-sm);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+.month-select:hover {
+  border-color: var(--color-accent);
+}
+
+.month-select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+}
+
+/* Ajustar posición del top-nav para que esté debajo del month selector */
+.top-nav {
+  top: calc(var(--header-height) + 50px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .month-selector-container {
+    height: 45px;
+  }
+
+  .month-nav-btn {
+    width: 32px;
+    height: 32px;
+    font-size: var(--font-size-md);
+  }
+
+  .month-select {
+    min-width: 140px;
+    height: 32px;
+    font-size: var(--font-size-sm);
+  }
+
+  .top-nav {
+    top: calc(var(--header-height) + 45px);
+  }
+}
