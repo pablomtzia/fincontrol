@@ -79,9 +79,17 @@ class Store {
         try {
             const result = await fullSync(this.data);
             if (result.changed) {
+                // Save merged data to localStorage
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(result.data));
+                console.log('Datos nuevos desde la nube');
+                // Reload to show new data (once per session to prevent loops)
+                if (!sessionStorage.getItem('_syncReloaded')) {
+                    sessionStorage.setItem('_syncReloaded', '1');
+                    location.reload();
+                    return;
+                }
+                // Fallback: update in memory if already reloaded
                 this.data = result.data;
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
-                console.log('Datos sincronizados desde la nube');
             }
         } catch (e) {
             console.warn('Cloud sync failed:', e);
@@ -90,10 +98,12 @@ class Store {
         }
     }
 
-    // Auto-sync when tab becomes visible again
+    // Auto-sync when tab/app becomes visible again
     _setupVisibilitySync() {
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible' && isSyncEnabled()) {
+                // Clear reload flag so new data triggers a fresh reload
+                sessionStorage.removeItem('_syncReloaded');
                 this.initCloudSync();
             }
         });
