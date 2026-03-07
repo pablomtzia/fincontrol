@@ -13,6 +13,10 @@ export class DashboardView {
   render(container) {
     const summary = store.getSummary();
     const md = store.getMonthData();
+    const investments = store.getInvestments();
+    const income = md.income || [];
+    const fixedExpenses = md.fixedExpenses || [];
+    const variableExpenses = md.variableExpenses || [];
 
     const expensePercent = summary.income > 0
       ? ((summary.expenses.total / summary.income) * 100).toFixed(0) : 0;
@@ -35,7 +39,7 @@ export class DashboardView {
         <div class="metric-card green">
           <div class="metric-label">Ingresos</div>
           <div class="metric-value">${formatCurrency(summary.income)}</div>
-          <div class="metric-change positive">${md.income.length} fuentes</div>
+          <div class="metric-change positive">${income.length} fuentes</div>
         </div>
         <div class="metric-card red">
           <div class="metric-label">Gastos</div>
@@ -84,7 +88,7 @@ export class DashboardView {
             <span class="cell-positive">${formatCurrency(summary.income)}</span>
           </div>
           <ul class="summary-list">
-            ${md.income.map(i => `
+            ${income.map(i => `
               <li class="summary-item">
                 <span class="summary-item-label">${i.name}</span>
                 <span class="summary-item-value cell-positive">${formatCurrency(i.amount)}</span>
@@ -100,7 +104,7 @@ export class DashboardView {
             <span class="cell-amount">${formatCurrency(summary.investments.currentValue)}</span>
           </div>
           <ul class="summary-list">
-            ${md.investments.map(inv => {
+            ${investments.map(inv => {
       const val = inv.shares * inv.pricePerShare;
       const profit = val - inv.invested;
       return `
@@ -149,7 +153,7 @@ export class DashboardView {
     this.destroyCharts();
 
     // Gráfico donut de gastos
-    const allExpenses = [...md.fixedExpenses, ...md.variableExpenses];
+    const allExpenses = [...(md.fixedExpenses || []), ...(md.variableExpenses || [])];
     const categoryTotals = {};
 
     allExpenses.forEach(exp => {
