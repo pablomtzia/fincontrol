@@ -14,8 +14,8 @@ export class ExpensesView {
   render(container) {
     const summary = store.getSummary();
     const md = store.getMonthData();
-    const fixedExpenses = md.fixedExpenses;
-    const variableExpenses = md.variableExpenses;
+    const fixedExpenses = md.fixedExpenses || [];
+    const variableExpenses = md.variableExpenses || [];
 
     container.innerHTML = `
       <div class="view-header">
@@ -170,7 +170,7 @@ export class ExpensesView {
   renderChart(md) {
     this.destroyCharts();
 
-    const allExp = [...md.fixedExpenses, ...md.variableExpenses];
+    const allExp = [...(md.fixedExpenses || []), ...(md.variableExpenses || [])];
     const catTotals = {};
     allExp.forEach(e => {
       const cat = getCategoryById(e.category);
