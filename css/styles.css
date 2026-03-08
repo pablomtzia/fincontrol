@@ -1556,3 +1556,157 @@ body {
     color: var(--accent);
     word-break: break-all;
 }
+
+/* ===================================
+   MOBILE RESPONSIVE
+   =================================== */
+
+/* Touch devices: always show action buttons (no hover on mobile) */
+@media (hover: none) {
+    .row-actions {
+        opacity: 1 !important;
+    }
+}
+
+/* Mobile layout */
+@media (max-width: 768px) {
+    /* Row actions always visible on mobile */
+    .row-actions {
+        opacity: 1 !important;
+        flex-wrap: wrap;
+    }
+
+    .row-action-btn {
+        padding: 0.4rem 0.7rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    /* Compact table padding */
+    .data-table th {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.7rem;
+    }
+
+    .data-table td {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.82rem;
+    }
+
+    /* Hide Notas and Categoría columns on mobile */
+    .data-table th:nth-child(2),
+    .data-table td:nth-child(2),
+    .data-table th:nth-child(3),
+    .data-table td:nth-child(3) {
+        display: none;
+    }
+
+    /* Table container scrollable */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Metrics grid: 2 columns on mobile */
+    .metrics-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .metric-card {
+        padding: 1rem;
+    }
+
+    .metric-value {
+        font-size: 1.25rem;
+    }
+
+    .metric-label {
+        font-size: 0.7rem;
+    }
+
+    /* Charts: single column */
+    .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    /* View header */
+    .view-header {
+        padding: 0;
+    }
+
+    .view-title {
+        font-size: 1.4rem;
+    }
+
+    /* Section header */
+    .section-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    /* Cards compact */
+    .card, .chart-card {
+        padding: 1rem;
+    }
+
+    /* Main content spacing */
+    .main-content {
+        padding: 1rem;
+        padding-bottom: 6rem !important;
+    }
+
+    /* Summary list compact */
+    .summary-list {
+        gap: 0;
+    }
+
+    .summary-item {
+        padding: 0.5rem 0;
+        font-size: 0.85rem;
+    }
+
+    /* Form adjustments */
+    .form-row {
+        flex-direction: column;
+    }
+
+    /* Modal compact */
+    .modal {
+        width: 95%;
+        max-width: 95%;
+        margin: 1rem;
+    }
+
+    /* Broker badge compact */
+    .broker-badge {
+        font-size: 0.65rem;
+    }
+
+    /* Investment cards */
+    .investment-card {
+        padding: 1rem;
+    }
+}
+
+/* Small phones */
+@media (max-width: 400px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .metric-value {
+        font-size: 1.1rem;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.5rem;
+    }
+
+    .row-action-btn {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
