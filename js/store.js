@@ -61,29 +61,31 @@ class Store {
     }
 
     // Load from localStorage
+    // Migrate old data format (investments in months → root)
+    migrateData(data) {
+        if (!data.investments || data.investments.length === 0) {
+            data.investments = [];
+            if (data.months) {
+                for (const month of Object.values(data.months)) {
+                    if (month.investments && month.investments.length > 0) {
+                        data.investments.push(...month.investments);
+                    }
+                }
+            }
+        }
+        if (data.months) {
+            for (const month of Object.values(data.months)) {
+                delete month.investments;
+            }
+        }
+        return data;
+    }
+
     load() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (raw) {
-                const data = JSON.parse(raw);
-                // Migrate: move investments from months to root if needed
-                if (!data.investments || data.investments.length === 0) {
-                    data.investments = [];
-                    if (data.months) {
-                        for (const month of Object.values(data.months)) {
-                            if (month.investments && month.investments.length > 0) {
-                                data.investments.push(...month.investments);
-                            }
-                        }
-                    }
-                }
-                // Clean up: remove investments from month objects
-                if (data.months) {
-                    for (const month of Object.values(data.months)) {
-                        delete month.investments;
-                    }
-                }
-                return data;
+                return this.migrateData(JSON.parse(raw));
             }
         } catch (e) {
             console.warn('Error loading data:', e);
@@ -98,7 +100,7 @@ class Store {
         try {
             const result = await fullSync(this.data);
             if (result.changed) {
-                this.data = result.data;
+                this.data = this.migrateData(result.data);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
                 console.log('Datos sincronizados desde la nube');
             }
