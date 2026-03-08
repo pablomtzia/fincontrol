@@ -1570,6 +1570,7 @@ body {
 
 /* Mobile layout */
 @media (max-width: 768px) {
+
     /* Row actions always visible on mobile */
     .row-actions {
         opacity: 1 !important;
@@ -1586,6 +1587,7 @@ body {
     .data-table th {
         padding: 0.5rem 0.75rem;
         font-size: 0.7rem;
+        white-space: nowrap;
     }
 
     .data-table td {
@@ -1593,12 +1595,9 @@ body {
         font-size: 0.82rem;
     }
 
-    /* Hide Notas and Categoría columns on mobile */
-    .data-table th:nth-child(2),
-    .data-table td:nth-child(2),
-    .data-table th:nth-child(3),
-    .data-table td:nth-child(3) {
-        display: none;
+    /* Table keeps all columns, scrolls horizontally */
+    .data-table {
+        min-width: 600px;
     }
 
     /* Table container scrollable */
@@ -1647,7 +1646,8 @@ body {
     }
 
     /* Cards compact */
-    .card, .chart-card {
+    .card,
+    .chart-card {
         padding: 1rem;
     }
 
